@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>bpmn-js modeler demo</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="vendor/bpmn-js/assets/diagram-js.css" />
+  <link rel="stylesheet" href="vendor/bpmn-js/assets/bpmn-font/css/bpmn-embedded.css" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="content" id="js-drop-zone">
+
+    <div class="message intro">
+      <div class="note">
+        Drop BPMN diagram from your desktop or <a id="js-create-diagram" href>create a new diagram</a> to get started.
+      </div>
+    </div>
+
+    <div class="message error">
+      <div class="note">
+        <p>Ooops, we could not display the BPMN 2.0 diagram.</p>
+
+        <div class="details">
+          <span>cause of the problem</span>
+          <pre></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas" id="js-canvas"></div>
+  </div>
+
+  <ul class="buttons">
+    <li>
+      download
+    </li>
+    <li>
+      <a id="js-download-diagram" href title="download BPMN diagram">
+        BPMN diagram
+      </a>
+    </li>
+    <li>
+      <a id="js-download-svg" href title="download as SVG image">
+        SVG image
+      </a>
+    </li>
+    <li>Export</li>
+    <li>
+      <a href="#" id ="exportrdf" title="Export as RDF" class="active" onclick="exportRDF();">
+        RDF
+      </a>
+    </li>
+    <li>
+      <input type="hidden" id="createDataSchema" href title="import data schema" >
+        
+    </li>
+    <li>
+      <input type="file" name="DataSchemaFile" id="DataSchemaFile"/>
+    </li>
+    <li>
+      <a id="downloadDataSchema" href title="import data schema" class="active">
+        Download data schema RDF
+      </a>
+    </li>
+    <li>
+      <a id="storeRDF" href title="storeRDF" class="active">
+        Store RDF
+      </a>
+    </li>
+    <li><input type="hidden" id="xml-as-string" /></li>
+    <li><input type="hidden" id="xslt-as-string" /></li>
+    <li><input type="hidden" id="rdf-as-string" /></li>
+  </ul>
+
+  <script>
+    function exportRDF() {
+      parser = new DOMParser();
+      xmlstring = document.getElementById("xml-as-string").value;
+      xsltstring = document.getElementById("xslt-as-string").value;
+      xml = parser.parseFromString(xmlstring, "text/xml");
+      xslt = parser.parseFromString(xsltstring, "text/xml");
+      xsltProcessor = new XSLTProcessor();
+      xsltProcessor.importStylesheet(xslt);
+      result = xsltProcessor.transformToFragment(xml, document);
+      res=new XMLSerializer().serializeToString(result);
+      document.getElementById("rdf-as-string").value=res
+      x=document.getElementById("rdf-as-string").value
+      var eleLink = document.createElement('a');
+      eleLink.download = "try.rdf";
+      eleLink.style.display = 'none';
+      // 字符内容转变成blob地址
+      var blob = new Blob([res]);
+      eleLink.href = URL.createObjectURL(blob);
+      // 触发点击
+      document.body.appendChild(eleLink);
+      eleLink.click();
+      // 然后移除
+      document.body.removeChild(eleLink);
+      //alert(new XMLSerializer().serializeToString(result));
+    }
+
+    function exportDS(){
+      res=document.getElementById("downloadDataSchema").value
+      var eleLink = document.createElement('a');
+      eleLink.download = "dsrdf.rdf";
+      eleLink.style.display = 'none';
+      // 字符内容转变成blob地址
+      var blob = new Blob([res]);
+      eleLink.href = URL.createObjectURL(blob);
+      // 触发点击
+      document.body.appendChild(eleLink);
+      eleLink.click();
+      // 然后移除
+      document.body.removeChild(eleLink);
+      //alert(new XMLSerializer().serializeToString(result));
+    }
+    
+  </script>
+
+  <script src="app.js"></script>
+</html>

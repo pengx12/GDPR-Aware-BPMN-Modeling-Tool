@@ -1,0 +1,60 @@
+{
+  "name": "bpmn-js-example-modeler",
+  "version": "0.0.0",
+  "description": "A simple modeler built with bpmn-js",
+  "scripts": {
+    "all": "run-s lint build",
+    "build": "webpack --mode production",
+    "dev": "node RDBtoRDF/testdatabase.js & webpack-dev-server --content-base=public --open",
+    "lint": "eslint .",
+    "start": "run-s dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bpmn-io/bpmn-js-examples"
+  },
+  "keywords": [
+    "bpmnjs-example"
+  ],
+  "author": {
+    "name": "Nico Rehwaldt",
+    "url": "https://github.com/nikku"
+  },
+  "contributors": [
+    {
+      "name": "bpmn.io contributors",
+      "url": "https://github.com/bpmn-io"
+    }
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "copy-webpack-plugin": "^4.6.0",
+    "eslint": "^5.0.1",
+    "eslint-plugin-bpmn-io": "^0.5.3",
+    "npm-run-all": "^4.1.3",
+    "raw-loader": "^0.5.1",
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.0.8",
+    "webpack-dev-server": "^3.1.14"
+  },
+  "dependencies": {
+    "@antv/g2": "^3.5.13",
+    "@antv/l7": "^2.0.0-beta.28",
+    "@antv/l7-maps": "^2.0.34",
+    "bpmn-js": "^6.3.1",
+    "diagram-js": "^5.0.0",
+    "jquery": "^3.3.1",
+    "mysql": "^2.18.1",
+    "papaparse": "^5.2.0",
+    "rdf_js_interface": "^0.8.0",
+    "uri-js": "^4.2.2",
+    "urijs": "^1.19.2"
+  },
+  "browser": {
+    "child_process": false
+  }
+}

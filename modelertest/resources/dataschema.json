@@ -1,0 +1,6 @@
+{
+    "finalUrl":"http://www.tcd.ie/data",
+    "tablename":"UserInformation",
+    "colname":["id","name","email","gender","birthday","phonenumber"],
+    "notpersonal":["id"]
+  }
