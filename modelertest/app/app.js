@@ -86,65 +86,51 @@ function saveDiagram(done) {
 }
 
 function storeRDF(callback){
-  var rdfstore = require('rdfstore');
-    // import rdfString from '../RDBtoRDF/dataschema.rdf'
-    let turtleString='<http://foo.bar/database/InformationTable> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/csvw#Table>.'
-    let rdfString=document.getElementById("rdf-as-string").value
-    rdbrdfString= rdbrdfString
-    // import rdfString from '../RDBtoRDF/try.rdf';
-    rdfstore.create(function(err, store) {
-      store.load("text/turtle", rdfString, function(err, results) {
-      //    store.registerDefaultProfileNamespaces();
+	// MAKE SURE THAT YOU GIVE THE DIAGRAM A URI AS WELL! Remember that we discussed this.
+	// This can be requested with a dialogue box
+	let diagramURI = 'http://example.org/base-uri-for-bmpn-diagram';
+	
+	// MAKE SURE THAT YOU FIX THE RDF! THE ROOT SHOULD BE rdf:RDF, not rdf:rdf.
+	// let rdfString = document.getElementById("rdf-as-string").value;
+	let rdfString = "<rdf:RDF xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\" xmlns:dcterms=\"http://purl.org/dc/terms/\" xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmno=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><rdf:description rdf:about=\"http://www.example.org/resource/StartEvent_1\"><rdf:type rdf:resource=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#startEvent\"></rdf:type></rdf:description><rdf:description rdf:about=\"http://www.example.org/resource/Task_14e76t5\"><rdf:type rdf:resource=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#task\"></rdf:type><bpmno:name>this</bpmno:name><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow></rdf:description><rdf:description rdf:about=\"http://www.example.org/resource/SequenceFlow_0n0walt\"><rdf:type rdf:resource=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#sequenceFlow\"></rdf:type><bpmno:has_sourceref rdf:resource=\"http://www.example.org/resource/StartEvent_1\"></bpmno:has_sourceref><bpmno:has_targetref rdf:resource=\"http://www.example.org/resource/Task_14e76t5\"></bpmno:has_targetref><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow></rdf:description></rdf:RDF>";	
 
-        store.execute('SELECT * { ?s ?p ?name }', function(err,results) {
-          // alert(results.length);
-        });
-      });
-    });
-    // var http = require("http");
-    // var blob = new Blob([xml]);
-    // let bloburl = [URL.createObjectURL(blob)];
-    // var options = {
-    //   host: 'localhost',
-    //   port: 3030,
-    //   path: '/dataset1/update?data='+xml,
-    //   method: 'POST'
-    // };
-    var request = require('request');
-  //   let response=request.post('http://localhost:3030/dataset1/update'
-  //   , (err, res, body) => {
-  //     if (err) {
-  //         return console.log(err);
-  //     }
-  //     console.log('Status Code:', res.statusCode);
-  // }
-  //   )
-    var options = {
-      method: 'post',
-      url: 'http://localhost:3030/dataset1/update',
-      headers: {'Content-Type': 'text/turtle;charset=utf-8'},
-      data: turtleString,
-  };
-  request(options, function(error, response, body) {
-      console.log(body);
-  });
-//     var form = response.form();
-// form.append('file', turtleString, {
-//   filename: 'myfile.txt',
-//   contentType: 'text/plain'
-// });
-    // var req = http.request(options, function(res) {
-    //   console.log('STATUS: ' + res.statusCode);
-    //   console.log('HEADERS: ' + JSON.stringify(res.headers));
-    //   res.setEncoding('utf8');
-    //   res.on('data', function (chunk) {
-    //     console.log('BODY: ' + chunk);
-    //     alert(chunk);
-    //   });
-    // });
-   let sparqlqry = 'select ?tablename,?purpose where {?annotation <bpmno:forpurpose> ?purpose.?tmp <bpmno:has_targetref>  ?annotation.?tmp <bpmno:has_sourceref>  ?datareference. ?datareference <bpmno:name> ?tablename.}';
-  // req.write(require('querystring').stringify(dataq));
-  // req.end();
+
+	// We will use rdflib to parse the RDF/XML, and then output it in TURTLE/N3 which we can reuse for the SPARQL UPDATE QUERY
+	// the flags in the serialization ensure that we use full URIs and no namespace prefixes. While more verbose, it makes
+	// prototyping easier. We just need to remove the base URI from the string
+	var rdf = require('rdflib');
+	var graph = rdf.graph();
+	rdf.parse(rdfString, graph, diagramURI, 'application/rdf+xml');
+	graph.namespaces = undefined;
+	var serial = rdf.serialize(undefined, graph, diagramURI, 'text/n3', undefined, {flags: 'deinprstux'});
+	
+	// remove the base uri (prefix :), which will be the first line of the string. In other words, remove the first line of the string
+	serial = serial.substring(serial.indexOf("\n") + 1).trim();
+	
+	var sparqlUpdateQuery = `
+	DROP SILENT GRAPH <${diagramURI}> ;
+	CREATE SILENT GRAPH <${diagramURI}> ;
+	INSERT DATA { 
+		GRAPH <${diagramURI}> {
+			${serial}
+		} 
+	} `;
+	
+	// THIS IS HOW THE QUEYRY LOOKS LIKE.
+	console.log(sparqlUpdateQuery);
+	
+	var request = require('request');
+	request.post(
+		{ url:'http://localhost:3030/dataset1/update?', form: { update: sparqlUpdateQuery } }, 
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				console.log('successful update');
+				console.log(body);
+			} else {
+				console.log(response.statusCode)
+				console.warn(error);
+			}
+		});
 
 }
 

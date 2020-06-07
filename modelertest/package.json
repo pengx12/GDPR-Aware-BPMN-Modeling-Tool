@@ -53,6 +53,7 @@
     "mysql-loader": "0.0.4",
     "papaparse": "^5.2.0",
     "rdf_js_interface": "^0.8.0",
+    "rdflib": "^1.2.2",
     "rdfstore": "^0.9.17",
     "request": "^2.88.2",
     "sqlite3": "^4.2.0",
