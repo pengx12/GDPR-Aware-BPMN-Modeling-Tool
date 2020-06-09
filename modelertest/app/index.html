@@ -78,6 +78,7 @@
       parser = new DOMParser();
       xmlstring = document.getElementById("xml-as-string").value;
       xsltstring = document.getElementById("xslt-as-string").value;
+      console.log(xsltstring)
       xml = parser.parseFromString(xmlstring, "text/xml");
       xslt = parser.parseFromString(xsltstring, "text/xml");
       xsltProcessor = new XSLTProcessor();

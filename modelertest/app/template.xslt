@@ -8,6 +8,7 @@
 	xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
 	xmlns:bpmno="http://dkm.fbk.eu/index.php/BPMN2_Ontology#" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:project="http://kdeg.scss.tcd.ie/gdpr-bpmn/ontology#"
 	>
 	
 	<!-- I HAVE PUT A PLACEHOLDER FOR THE BASE URI HERE, BUT IT IS UP TO YOU TO THINK OF A STRATEGRY. -->

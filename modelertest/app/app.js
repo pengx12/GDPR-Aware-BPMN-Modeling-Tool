@@ -53,25 +53,7 @@ function openDiagram(xml) {
 }
 
 function saveSVG(done) {
-  // var http = require("http");
-
-  // var options = {
-  //   host: 'localhost',
-  //   port: 3030,
-  //   path: '/dataset1/query?query=SELECT * WHERE { ?s ?p ?o }',
-  //   method: 'POST'
-  // };
-
-  // var req = http.request(options, function(res) {
-  //   console.log('STATUS: ' + res.statusCode);
-  //   console.log('HEADERS: ' + JSON.stringify(res.headers));
-  //   res.setEncoding('utf8');
-  //   res.on('data', function (chunk) {
-  //     console.log('BODY: ' + chunk);
-  //     alert(chunk);
-  //   });
-  // });
-// req.end();
+  
   modeler.saveSVG(done);
 }
 
@@ -85,22 +67,19 @@ function saveDiagram(done) {
   });
 }
 
-function storeRDF(callback){
+function storeRDF(converstr,converttype,baseuri,callback){
 	// MAKE SURE THAT YOU GIVE THE DIAGRAM A URI AS WELL! Remember that we discussed this.
 	// This can be requested with a dialogue box
-	let diagramURI = 'http://example.org/base-uri-for-bmpn-diagram';
+  let diagramURI = 'http://example.org/base-uri-for-bmpn-diagram';
+  diagramURI=baseuri
 	
 	// MAKE SURE THAT YOU FIX THE RDF! THE ROOT SHOULD BE rdf:RDF, not rdf:rdf.
-	// let rdfString = document.getElementById("rdf-as-string").value;
-	let rdfString = "<rdf:RDF xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\" xmlns:dcterms=\"http://purl.org/dc/terms/\" xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmno=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><rdf:description rdf:about=\"http://www.example.org/resource/StartEvent_1\"><rdf:type rdf:resource=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#startEvent\"></rdf:type></rdf:description><rdf:description rdf:about=\"http://www.example.org/resource/Task_14e76t5\"><rdf:type rdf:resource=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#task\"></rdf:type><bpmno:name>this</bpmno:name><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow></rdf:description><rdf:description rdf:about=\"http://www.example.org/resource/SequenceFlow_0n0walt\"><rdf:type rdf:resource=\"http://dkm.fbk.eu/index.php/BPMN2_Ontology#sequenceFlow\"></rdf:type><bpmno:has_sourceref rdf:resource=\"http://www.example.org/resource/StartEvent_1\"></bpmno:has_sourceref><bpmno:has_targetref rdf:resource=\"http://www.example.org/resource/Task_14e76t5\"></bpmno:has_targetref><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow><bpmno:has_sequenceflow rdf:resource=\"http://www.example.org/resource/SequenceFlow_0n0walt\"></bpmno:has_sequenceflow></rdf:description></rdf:RDF>";	
-
-
 	// We will use rdflib to parse the RDF/XML, and then output it in TURTLE/N3 which we can reuse for the SPARQL UPDATE QUERY
 	// the flags in the serialization ensure that we use full URIs and no namespace prefixes. While more verbose, it makes
 	// prototyping easier. We just need to remove the base URI from the string
 	var rdf = require('rdflib');
 	var graph = rdf.graph();
-	rdf.parse(rdfString, graph, diagramURI, 'application/rdf+xml');
+	rdf.parse(converstr, graph, diagramURI, converttype);
 	graph.namespaces = undefined;
 	var serial = rdf.serialize(undefined, graph, diagramURI, 'text/n3', undefined, {flags: 'deinprstux'});
 	
@@ -131,7 +110,20 @@ function storeRDF(callback){
 				console.warn(error);
 			}
 		});
+    let sparqlqry="SELECT ?s WHERE {?s ?p ?o}"
 
+    // sparqlqry="SELECT ?t WHERE{<http://www.tcd.ie/data/UserInformation> <http://www.w3.org/ns/csvw#columns> ?t .}"
+    request.post(
+      { url:'http://localhost:3030/dataset1/query?', form: { query: sparqlqry } }, 
+      function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+          console.log('successful query');
+          console.log(body);
+        } else {
+          console.log(response.statusCode)
+          console.warn(error);
+        }
+      });
 }
 
 
@@ -215,7 +207,11 @@ $(function() {
     e.stopPropagation();
     e.preventDefault();
 
-    storeRDF();
+    let baseuri=prompt("Input Base URI");   
+    let rdfString=document.getElementById("rdf-as-string").value
+    rdfString=rdfString.replace(/rdf:rdf/g, 'rdf:RDF');
+
+    storeRDF(rdfString, 'application/rdf+xml',baseuri);
   });
 
 
@@ -268,9 +264,8 @@ $(function() {
       let res=getDataSchema(finalUrl,dataschemajson)
       rdbrdfString=res
       alert(res);
-      setEncoded($('#downloadDataSchema'), 'ds.rdf', res);
-      // $('#downloadDataSchema').attr({ "value": res });
-      // callback(res);
+      // setEncoded($('#downloadDataSchema'), 'ds.rdf', res);
+      storeRDF(res, 'text/turtle',finalUrl);
     };
     reader.readAsText(file)
   });
