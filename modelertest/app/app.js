@@ -209,7 +209,7 @@ $(function() {
 
     let baseuri=prompt("Input Base URI");   
     let rdfString=document.getElementById("rdf-as-string").value
-    rdfString=rdfString.replace(/rdf:rdf/g, 'rdf:RDF');
+    //rdfString=rdfString.replace(/rdf:rdf/g, 'rdf:RDF');
 
     storeRDF(rdfString, 'application/rdf+xml',baseuri);
   });

@@ -78,14 +78,13 @@
       parser = new DOMParser();
       xmlstring = document.getElementById("xml-as-string").value;
       xsltstring = document.getElementById("xslt-as-string").value;
-      console.log(xsltstring)
-      xml = parser.parseFromString(xmlstring, "text/xml");
-      xslt = parser.parseFromString(xsltstring, "text/xml");
+      xml = parser.parseFromString(xmlstring, "application/xml");
+      xslt = parser.parseFromString(xsltstring, "application/xml");
       xsltProcessor = new XSLTProcessor();
       xsltProcessor.importStylesheet(xslt);
-      result = xsltProcessor.transformToFragment(xml, document);
+      result = xsltProcessor.transformToDocument(xml);
       res=new XMLSerializer().serializeToString(result);
-      document.getElementById("rdf-as-string").value=res
+	  document.getElementById("rdf-as-string").value=res
       x=document.getElementById("rdf-as-string").value
       var eleLink = document.createElement('a');
       eleLink.download = "try.rdf";
