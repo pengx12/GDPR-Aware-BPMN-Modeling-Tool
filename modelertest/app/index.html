@@ -68,6 +68,11 @@
         Store RDF
       </a>
     </li>
+    <li>
+      <a id="downloadtermandcon" href title="downloadtermandcon">
+        Download terms and condition
+      </a>
+    </li>
     <li><input type="hidden" id="xml-as-string" /></li>
     <li><input type="hidden" id="xslt-as-string" /></li>
     <li><input type="hidden" id="rdf-as-string" /></li>
@@ -84,19 +89,19 @@
       xsltProcessor.importStylesheet(xslt);
       result = xsltProcessor.transformToDocument(xml);
       res=new XMLSerializer().serializeToString(result);
-	  document.getElementById("rdf-as-string").value=res
+	    document.getElementById("rdf-as-string").value=res
       x=document.getElementById("rdf-as-string").value
-      var eleLink = document.createElement('a');
-      eleLink.download = "try.rdf";
-      eleLink.style.display = 'none';
-      // 字符内容转变成blob地址
-      var blob = new Blob([res]);
-      eleLink.href = URL.createObjectURL(blob);
-      // 触发点击
-      document.body.appendChild(eleLink);
-      eleLink.click();
-      // 然后移除
-      document.body.removeChild(eleLink);
+      // var eleLink = document.createElement('a');
+      // eleLink.download = "bpmn.rdf";
+      // eleLink.style.display = 'none';
+      // // 字符内容转变成blob地址
+      // var blob = new Blob([res]);
+      // eleLink.href = URL.createObjectURL(blob);
+      // // 触发点击
+      // document.body.appendChild(eleLink);
+      // eleLink.click();
+      // // 然后移除
+      // document.body.removeChild(eleLink);
       //alert(new XMLSerializer().serializeToString(result));
     }
 

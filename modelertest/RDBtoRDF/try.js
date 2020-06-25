@@ -1,6 +1,8 @@
 // import csvString from '../RDBtoRDF/test.csv';
 // var csvString = require('../test.csv');
 
+import { Base } from 'diagram-js/lib/model';
+
 /**
 * Experimental CSV+ extension to jQuery, including location of the CSV+ metadata and a mustache-like simple
 * template to convert the CSV data into a javascript object, JSON, Turtle, XML, or any other text.
@@ -759,6 +761,18 @@ Dependencies:
         // }
         // Set the row type
         conv_functions.add_type(state, "Table");
+        var predicate = {
+          // value  : col_names[cindex].uri,
+          value  : "name",
+          prefix : "csv",
+        };
+        // This is where the datatype issue will come in!
+        var subject = {
+          // value : cell,
+          value  : state["@id"],
+          isuri : false,
+        }
+        conv_functions.add(state, predicate, subject);
         // Set the row number as a signal
         // conv_functions.add(state, {value: "row", prefix: "csv"}, {value: rindex, isuri: false, datatype: "integer"});
         // Go through the individual cells now
@@ -788,7 +802,17 @@ Dependencies:
         // if (tmp.indexOf(cell)!=-1){
         //   console.log('name1')
         // }
-        
+        var predicate = {
+          // value  : col_names[cindex].uri,
+          value  : "name",
+          prefix : "csv",
+        };
+        // This is where the datatype issue will come in!
+        var subject = {
+          value  : cell,
+          isuri : false,
+        }
+        conv_functions.add(state, predicate, subject);
         if (!(('notpersonal' in data) && (data['notpersonal'].indexOf(cell)!=-1)))
         {
           var predicate = {

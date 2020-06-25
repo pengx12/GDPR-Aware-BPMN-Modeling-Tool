@@ -23,10 +23,9 @@
 	<xsl:template match="//bpmn:task">
 		<rdf:Description rdf:about="{$baseuri}{@id}">
 			<rdf:type rdf:resource="http://dkm.fbk.eu/index.php/BPMN2_Ontology#task" />
-			<xsl:call-template name="relateddata"/>
 			<xsl:call-template name="flowelement"/>
-			
 		</rdf:Description>
+		<xsl:call-template name="relateddata"/>
 	</xsl:template>
 
 	<xsl:template match="//bpmn:startEvent">
@@ -212,14 +211,14 @@
 		<rdf:Description rdf:about="{$baseuri}{@id}">
 			<rdf:type rdf:resource="http://dkm.fbk.eu/index.php/BPMN2_Ontology#textAnnotation" />
              <xsl:if test="//bpmn:text != ''">
-			<project:ForPurpose><xsl:value-of select="//bpmn:text" /></project:ForPurpose>
+			<project:purposeannotation><xsl:value-of select="//bpmn:text" /></project:purposeannotation>
 	  </xsl:if>   
 		</rdf:Description>
 	</xsl:template>
 
 	<xsl:template name="makeli">
       <bpmno:has_dataStoreRef rdf:resource="{$baseuri}{//bpmn:sourceRef}" />
-	<bpmno:has_dataStoreRef rdf:resource="{$baseuri}{//bpmn:targetRef}" />
+		<bpmno:has_dataStoreRef rdf:resource="{$baseuri}{//bpmn:targetRef}" />
     </xsl:template>
     
     <xsl:template name="relateddata">
@@ -230,8 +229,22 @@
 		</xsl:for-each> 
 		<xsl:for-each select="bpmn:dataInputAssociation"> 
             <rdf:Description rdf:about="{$baseuri}{@id}">
-                <bpmno:has_itemAwareElement rdf:resource="{$baseuri}{//bpmn:sourceRef}" />
-                <bpmno:has_itemAwareElement rdf:resource="{$baseuri}{//bpmn:targetRef}" />
+				<xsl:variable name="tmp" select="bpmn:sourceRef" />
+                <bpmno:has_itemAwareElement rdf:resource="{$baseuri}{$tmp}" />
+				<xsl:variable name="tmp2" select="bpmn:targetRef" />
+                <bpmno:has_itemAwareElement rdf:resource="{$baseuri}{$tmp2}" />
+			</rdf:Description>
+		</xsl:for-each> 
+		<xsl:for-each select="bpmn:dataOutputAssociation"> 
+            <rdf:Description rdf:about="{$baseuri}{@id}">
+				<xsl:variable name="tmp" select="bpmn:sourceRef" />
+				<xsl:if test="$tmp != ''">
+					<bpmno:has_itemAwareElement rdf:resource="{$baseuri}{$tmp}" />
+				</xsl:if>
+				<xsl:variable name="tmp2" select="bpmn:targetRef" />
+				<xsl:if test="$tmp2 != ''">
+					<bpmno:has_itemAwareElement rdf:resource="{$baseuri}{$tmp2}" />
+				</xsl:if>
 			</rdf:Description>
 		</xsl:for-each> 
     </xsl:template>
@@ -290,6 +303,9 @@
         </xsl:if>
         <xsl:for-each select="bpmn:dataInputAssociation"> 
             <bpmno:has_dataInputAssociation rdf:resource="{$baseuri}{@id}"/> 
+        </xsl:for-each> 
+        <xsl:for-each select="bpmn:dataOutputAssociation"> 
+            <bpmno:has_dataOutputAssociation rdf:resource="{$baseuri}{@id}"/> 
         </xsl:for-each> 
     </xsl:template>
 
