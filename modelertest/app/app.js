@@ -81,9 +81,19 @@ function loadHistoryRDF() {
                   COPY GRAPH <${graph1}>  TO GRAPH <${gbaseuri + '/data'}>
                   `;
                   updatesparql(UpdateQuery1, function () {
+                    let sparqlqry3 = `PREFIX bpmno: <http://dkm.fbk.eu/index.php/BPMN2_Ontology#> 
+                        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                        ASK WHERE {GRAPH <${graph1}> {
+                          ?data a  <http://www.w3.org/ns/csvw#Database>.
+                          }
+                        }`
+                      asksparql(sparqlqry3, function (x) {
+                      if (x){
+                        dataschematype = 'database'
+                      }
+                    })
                 })
               }
-            
           })
           let graph2 = graph.replace('/bpmn_', '/purpose_')
           let sparqlqry2 = `ASK WHERE { GRAPH <${graph2}>{ ?s ?p ?o } }`
@@ -283,11 +293,14 @@ function uploadBpmn(insertsparql,cururi,baseuri,done){
     querysparql(sparqlqry, function (resarr) {
       let gensparq = ''
       glabelele = new Array()
+      let datatable=new Array()
       for (let x of resarr) {
         let taskuri = x["task"]["value"]
         let purpose = x["purpose"]["value"]
         let datauri = x["personaldata"]["value"]
+        // datatable.push(x["dataname"]["value"])
         glabelele.push(taskuri)
+        datatable.push(datauri)
         glabelele.push(x["dataobjectref"]["value"])
         glabelele.push(x["datastorereference"]["value"])
         let hashpurpose = hashCode(purpose)
@@ -300,22 +313,42 @@ function uploadBpmn(insertsparql,cururi,baseuri,done){
         gensparq = gensparq + '<' + datauri + 'consent> <https://w3id.org/GConsent#hasStatus><' + onturi + 'ConsentStatusKnowntoRequest>.\n'
       }
       let purposeuri = gbaseuri + '/purpose'
-      let insertsqparql = getSparql(gensparq, 'text/turtle', gbaseuri);
+      // let insertsqparql = getSparql(gensparq, 'text/turtle', gbaseuri);
       done();
 
+      let motivation=new Array()
       let sparqlqry1 = `ASK WHERE { GRAPH <${purposeuri}>{ ?s ?p ?o } }`
       asksparql(sparqlqry1, function (x) {
         if (x)
         {
-          let UpdateQuery = `
-            COPY GRAPH <${purposeuri}>  TO GRAPH <${purposeuri+ '_history'}> 
-              `;
-            updatesparql(UpdateQuery, function () {
-              uploadPurpose(purposeuri,insertsqparql)
+          let sparqlqry = `PREFIX bpmno: <http://dkm.fbk.eu/index.php/BPMN2_Ontology#> 
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                Select ?data ?motivation ?motivationlabel where {GRAPH <${purposeuri}> {
+                  ?data <http://kdeg.scss.tcd.ie/gdpr-bpmn/ontology#dataWithMotivation> ?motivation.
+                  ?motivation <http://www.w3.org/2000/01/rdf-schema#label> ?motivationlabel.
+                  }
+                }`
+          querysparql(sparqlqry, function (resarr) {
+            
+          if (dataschematype == 'database'){
+            askForMotivation(datatable,resarr,gensparq,function(gensparq1){
+              let insertsqparql = getSparql(gensparq1, 'text/turtle', gbaseuri);
+              let UpdateQuery = `
+              COPY GRAPH <${purposeuri}>  TO GRAPH <${purposeuri+ '_history'}> 
+                `;
+              updatesparql(UpdateQuery, function () {
+                uploadPurpose(purposeuri,insertsqparql)
+              })
             })
+          }
+          
+          })
         }
         else{
-          uploadPurpose(purposeuri,insertsqparql)
+          askForMotivation([],resarr,gensparq,function(gensparq1){
+            let insertsqparql = getSparql(gensparq1, 'text/turtle', gbaseuri);
+            uploadPurpose(purposeuri,insertsqparql)
+          })
         }
       })
     }
@@ -323,6 +356,52 @@ function uploadBpmn(insertsparql,cururi,baseuri,done){
   }
   )
 }
+
+function askForMotivation(datatable,resarr,gensparq,done){
+  let sparqlqry = `PREFIX bpmno: <http://dkm.fbk.eu/index.php/BPMN2_Ontology#> 
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  Select ?column ?colname where {
+    GRAPH <${gbaseuri}/data>{
+      <${datatable[0]}> <http://www.w3.org/ns/csvw#name> ?dataname.
+      ?personaldata <http://www.w3.org/ns/csvw#columns> ?column.
+      ?column rdf:type <https://w3id.org/GDPRtEXT/PersonalData> .
+      ?column <http://www.w3.org/ns/csvw#name> ?colname.
+    }
+    FILTER( NOt EXISTS { GRAPH <${gbaseuri}/purpose>{?column <http://kdeg.scss.tcd.ie/gdpr-bpmn/ontology#dataWithMotivation> ?motivation. }
+    }).
+  }`
+  querysparql(sparqlqry, function (resarr1) {
+
+  let motivationdata=new Array()
+  let motivationdatauri=new Array()
+  for (let x of resarr1) {
+  motivationdatauri.push(x["column"]["value"])
+  motivationdata.push(x["colname"]["value"])
+  }
+  for (let x of resarr) {
+  let ind=motivationdatauri.indexOf(x["data"]["value"])
+  gensparq+='<' + x["data"]["value"] + '><http://kdeg.scss.tcd.ie/gdpr-bpmn/ontology#dataWithMotivation><' + x['motivation']['value'] + '>.\n'
+  gensparq+='<' + x["motivation"]["value"] + '><http://www.w3.org/2000/01/rdf-schema#label> \"' + x["motivationlabel"]["value"]  + '\".\n'
+  if (ind!=-1){
+    motivationdatauri.splice(ind,1)
+    motivationdata.splice(ind,1)
+    }
+  }
+  for (let i=0;i< motivationdata.length;i++) {
+    let tmp=prompt('please give your motivation to use personal data '+ motivationdata[i])
+    if(tmp!=null){
+      let hashmot = hashCode(motivationdata[i]+tmp)
+      gensparq+='<' + motivationdatauri[i] + '><http://kdeg.scss.tcd.ie/gdpr-bpmn/ontology#dataWithMotivation><http://www.example.org/resource/motivation' + hashmot + '>.\n'
+      gensparq+='<http://www.example.org/resource/motivation' + hashmot+ '><http://www.w3.org/2000/01/rdf-schema#label> \"' + tmp + '\".\n'
+      gensparq = gensparq + '<http://www.example.org/resource/motivation' + hashmot + '>  <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <' + onturi + 'motivation>.\n'
+    }
+  }
+  console.log(gensparq)
+  done(gensparq)
+  })
+}
+
+
 function uploadPurpose(purposeuri,insertsqparql){
   let sparqlUpdateQuery = `DROP SILENT GRAPH <${purposeuri}> ;
   CREATE SILENT GRAPH <${purposeuri}> ;
